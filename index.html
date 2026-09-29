@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How one scheme is joined — PS838178</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,650&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-active="0">
+  <div class="progress" id="progress"></div>
+
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Launch Melbourne · Vicmap join</p>
+      <p class="plan">PS838178</p>
+    </div>
+    <p class="top-result" id="topResult">1/6 Alfreda Avenue, Rosanna · 3 lots · Banyule</p>
+  </header>
+
+  <div class="layout">
+    <aside class="stage" aria-hidden="true">
+      <svg class="plate" viewBox="0 0 280 220" role="img">
+        <title>Schematic of four parcels on PS838178</title>
+        <rect class="lot lot-cm" data-lot="CM1" x="18" y="24" width="36" height="172" rx="6" />
+        <text class="lot-label" x="36" y="114" text-anchor="middle" transform="rotate(-90 36 114)">CM1</text>
+        <rect class="lot lot-1" data-lot="1" x="66" y="24" width="62" height="172" rx="6" />
+        <text class="lot-label" x="97" y="118" text-anchor="middle">Lot 1</text>
+        <rect class="lot lot-2" data-lot="2" x="136" y="24" width="62" height="172" rx="6" />
+        <text class="lot-label" x="167" y="118" text-anchor="middle">Lot 2</text>
+        <rect class="lot lot-3" data-lot="3" x="206" y="24" width="56" height="172" rx="6" />
+        <text class="lot-label" x="234" y="118" text-anchor="middle">Lot 3</text>
+      </svg>
+
+      <div class="join-stack" id="joinStack">
+        <div class="tbl" data-src="parcel">V_PARCEL_MP</div>
+        <div class="arrow">PARCEL_LGA_CODE</div>
+        <div class="tbl" data-src="lga">LGA_POLYGON</div>
+        <div class="arrow">PARCEL_PFI</div>
+        <div class="tbl" data-src="bridge">PARCEL_PROPERTY</div>
+        <div class="arrow">PROPERTY_PFI</div>
+        <div class="tbl" data-src="addr">ADDRESS</div>
+        <div class="arrow">centroid within</div>
+        <div class="tbl" data-src="zone">PLAN_ZONE</div>
+      </div>
+      <p class="stage-caption" id="stageCaption">Four parcels on one plan</p>
+    </aside>
+
+    <main class="story">
+      <section class="step" data-step="0" data-src="none">
+        <p class="kicker">Working example</p>
+        <h1>How we join one scheme</h1>
+        <p class="lede">
+          The statewide total is a count. The method is the joins that turn four Vicmap products into one row.
+          Scroll through <strong>PS838178</strong> — 1/6 Alfreda Avenue, Rosanna, in the City of <strong>Banyule</strong>.
+          Every id below is real.
+        </p>
+        <p class="hint">Scroll</p>
+      </section>
+
+      <section class="step wide" data-step="1" data-src="all">
+        <p class="kicker">Four data sources</p>
+        <h2>What each Vicmap product contains, and what we use</h2>
+        <p>
+          These are four official Victorian government geodatabases, not four copies of the same table.
+          Each answers a different question. We only keep the layers and fields the count needs.
+        </p>
+        <div class="sources">
+          <article class="source-card" data-tone="plan">
+            <p class="source-tag">Property · VMPROP.gdb</p>
+            <h3>Lots and plans</h3>
+            <p class="contains"><strong>Contains:</strong> every titled parcel, property polygons, the parcel–property bridge, centroids, easements, road casements.</p>
+            <p class="uses"><strong>We use:</strong> <code>V_PARCEL_MP</code> lot/plan fields, <code>PARCEL_PROPERTY</code> (parcel → property), <code>CENTROID</code> for the zone join.</p>
+            <p class="head-caption"><code>V_PARCEL_MP[cols].head(3)</code> · this plan</p>
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <div class="minitable">
+              <table>
+                <thead>
+                  <tr>
+                    <th>PARCEL_PFI</th>
+                    <th>PARCEL_SPI</th>
+                    <th>PARCEL_PLAN_NUMBER</th>
+                    <th>PARCEL_LOT_NUMBER</th>
+                    <th>PARCEL_STATUS</th>
+                    <th>PARCEL_ROAD</th>
+                    <th>PARCEL_ACCESSORY_LOT</th>
+                    <th>PARCEL_LGA_CODE</th>
+                    <th>PARV_CENTROID_PFI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>424071426</td><td>1\PS838178</td><td>PS838178</td><td>1</td>
+                    <td>A</td><td>N</td><td>N</td><td>303</td><td>424071488</td>
+                  </tr>
+                  <tr>
+                    <td>424071427</td><td>2\PS838178</td><td>PS838178</td><td>2</td>
+                    <td>A</td><td>N</td><td>N</td><td>303</td><td>424071489</td>
+                  </tr>
+                  <tr>
+                    <td>424071428</td><td>3\PS838178</td><td>PS838178</td><td>3</td>
+                    <td>A</td><td>N</td><td>N</td><td>303</td><td>424071490</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+          <article class="source-card" data-tone="zone">
+            <p class="source-tag">Planning · VMPLAN.gdb</p>
+            <h3>Land-use zone</h3>
+            <p class="contains"><strong>Contains:</strong> one layer, <code>PLAN_ZONE</code> — residential, industrial, commercial, park, farming, and so on.</p>
+            <p class="uses"><strong>We use:</strong> <code>ZONE_CODE</code>. Prefix GRZ / NRZ / RGZ / MUZ / LDRZ / TZ / UGZ / R1Z → residential, <code>confidence = high</code>.</p>
+            <p class="head-caption"><code>PLAN_ZONE[cols].head(3)</code></p>
+            <div class="src-badges">
+              <span class="key key-plan">plan</span>
+            </div>
+            <div class="minitable">
+              <table>
+                <thead>
+                  <tr><th>ZONE_CODE</th><th>ZONE_DESCRIPTION</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>PCRZ</td><td>PUBLIC CONSERVATION AND RESOURCE ZONE</td></tr>
+                  <tr><td>NRZ3</td><td>NEIGHBOURHOOD RESIDENTIAL ZONE - SCHEDULE 3</td></tr>
+                  <tr><td>GRZ2</td><td>GENERAL RESIDENTIAL ZONE - SCHEDULE 2</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+          <article class="source-card" data-tone="prop">
+            <p class="source-tag">Address · VMADD.gdb</p>
+            <h3>Street and unit labels</h3>
+            <p class="contains"><strong>Contains:</strong> about 4.2 million address points, including unit, house number, road, suburb, postcode.</p>
+            <p class="uses"><strong>We use:</strong> <code>PROPERTY_PFI</code>, <code>NUM_ROAD_ADDRESS</code> (also fallback <code>NUM_ADDRESS</code> / <code>LABEL_ADDRESS</code> / <code>EZI_ADDRESS</code>), <code>LOCALITY_NAME</code>, <code>POSTCODE</code>, <code>IS_PRIMARY</code>.</p>
+            <p class="head-caption"><code>ADDRESS[cols].head(3)</code> · this plan</p>
+            <div class="src-badges">
+              <span class="key key-prop">address</span>
+            </div>
+            <div class="minitable">
+              <table>
+                <thead>
+                  <tr>
+                    <th>PROPERTY_PFI</th>
+                    <th>NUM_ROAD_ADDRESS</th>
+                    <th>LOCALITY_NAME</th>
+                    <th>POSTCODE</th>
+                    <th>IS_PRIMARY</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>424071431</td><td>1/6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                  <tr><td>424071432</td><td>2/6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                  <tr><td>424071433</td><td>3/6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+          <article class="source-card" data-tone="lga">
+            <p class="source-tag">Admin · VMADMIN.gdb</p>
+            <h3>Council name</h3>
+            <p class="contains"><strong>Contains:</strong> LGA, suburb, postcode, parish, township, wards, CFA/FRV and other admin polygons.</p>
+            <p class="uses"><strong>We use:</strong> only <code>LGA_CODE</code> and <code>LGA_NAME</code> from <code>LGA_POLYGON</code>. Suburb comes from Address, not from Admin locality polygons.</p>
+            <p class="head-caption"><code>LGA_POLYGON[cols].head(3)</code></p>
+            <div class="src-badges">
+              <span class="key key-lga">admin</span>
+            </div>
+            <div class="minitable">
+              <table>
+                <thead>
+                  <tr><th>LGA_CODE</th><th>LGA_NAME</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>303</td><td>BANYULE</td></tr>
+                  <tr><td>311</td><td>CARDINIA</td></tr>
+                  <tr><td>356</td><td>NILLUMBIK</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="step" data-step="2" data-src="parcel">
+        <p class="kicker">Step 1 · Vicmap Property</p>
+        <h2>Start with parcels, not addresses</h2>
+        <p>
+          <code>V_PARCEL_MP</code> is one row per titled piece of land.
+          Filter to <code>PARCEL_PLAN_NUMBER = PS838178</code>.
+          Four parcels sit on this plan — three private lots and common property.
+        </p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>PARCEL_SPI</th><th>lot</th><th>PARCEL_PFI</th><th>status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1\PS838178</td><td>1</td><td>424071426</td><td>A</td></tr>
+                <tr><td>2\PS838178</td><td>2</td><td>424071427</td><td>A</td></tr>
+                <tr><td>3\PS838178</td><td>3</td><td>424071428</td><td>A</td></tr>
+                <tr class="cm"><td>CM1\PS838178</td><td>CM1</td><td>424071429</td><td>A</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="note">The SPI is already <em>lot\plan</em>. That is how we know these four rows belong together.</p>
+        <p class="note">If a title is registered, it will be recorded in Vicmap Property, no matter the residence ordered a parcel or not.</p>
+      </section>
+
+      <section class="step" data-step="3" data-src="parcel">
+        <p class="kicker">Step 2 · Count (still one table)</p>
+        <h2>Three private lots, one CM flag</h2>
+        <p>
+          Drop roads, accessory lots, and anything whose lot number starts with <code>CM</code>.
+          Count <strong>distinct</strong> private lot numbers on this plan. That count is 3, so the plan stays in the 3–10 band.
+          The CM row is not counted as a lot. It only sets <code>has_common_property = true</code>.
+        </p>
+        <div class="math">
+          <div class="pill keep">Lot 1</div>
+          <div class="pill keep">Lot 2</div>
+          <div class="pill keep">Lot 3</div>
+          <div class="pill drop">CM1 — not counted</div>
+        </div>
+        <p class="result-line">n_private_lots = <strong>3</strong> · prefix = <strong>PS</strong> · common property = <strong>yes</strong></p>
+      </section>
+
+      <section class="step" data-step="4" data-src="lga">
+        <p class="kicker">Step 3 · Admin join</p>
+        <h2>303 is a council code. Banyule is the council’s name.</h2>
+        <p>
+          <strong>Banyule</strong> is a local government area in Melbourne’s north-east
+          (Heidelberg, Rosanna, and nearby suburbs).
+          It is not a dataset. It is the council this land sits in.
+          Vicmap Property only stores the number <code>PARCEL_LGA_CODE = 303</code>.
+          Join that to Vicmap Admin <code>LGA_POLYGON</code> to get the name <strong>BANYULE</strong>.
+          Victoria has 79 councils in our headline file; Banyule is one of them (1,727 of the 45,057).
+          We used Banyule as the pilot because the statewide extract had to match something smaller first.
+        </p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>PARCEL_SPI</th><th>PARCEL_LGA_CODE</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1\PS838178</td><td>303</td></tr>
+                <tr><td>2\PS838178</td><td>303</td></tr>
+                <tr><td>3\PS838178</td><td>303</td></tr>
+                <tr class="cm"><td>CM1\PS838178</td><td>303</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="join-on">join on PARCEL_LGA_CODE = LGA_CODE</p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-lga">admin</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>LGA_CODE</th><th>LGA_NAME</th></tr>
+              </thead>
+              <tbody>
+                <tr class="win"><td>303</td><td>BANYULE</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="note">Rosanna is the suburb (from Address). Banyule is the council (from Admin). They are not the same thing.</p>
+      </section>
+
+      <section class="step" data-step="5" data-src="bridge">
+        <p class="kicker">Step 4 · Bridge table</p>
+        <h2>Parcels do not store the street address</h2>
+        <p>
+          Vicmap splits land and property. The bridge table is stored on its own. It has no lot numbers and no street names — only two ids.
+          <code>role</code> is our label for which kind of <code>PROPERTY_PFI</code> it is, so it can be carried into the join. Vicmap does not store that column.
+        </p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>PARCEL_PFI</th><th>PROPERTY_PFI</th><th>role</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>424071426</td><td>424071431</td><td>unit</td></tr>
+                <tr><td>424071426</td><td>424071430</td><td>parent street</td></tr>
+                <tr><td>424071427</td><td>424071432</td><td>unit</td></tr>
+                <tr><td>424071427</td><td>424071430</td><td>parent street</td></tr>
+                <tr><td>424071428</td><td>424071433</td><td>unit</td></tr>
+                <tr><td>424071428</td><td>424071430</td><td>parent street</td></tr>
+                <tr class="cm"><td>424071429</td><td>424071434</td><td>no. 6</td></tr>
+                <tr class="cm"><td>424071429</td><td>424071430</td><td>parent street</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p>
+          Eight rows for this plan. Each parcel appears twice because Vicmap also links it to a shared parent property
+          <code>424071430</code>. To attach lot numbers, join this to the parcel table from step 1.
+        </p>
+        <p class="join-on">join on PARCEL_PFI</p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>PARCEL_LOT_NUMBER</th><th>PARCEL_PFI</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>424071426</td></tr>
+                <tr><td>2</td><td>424071427</td></tr>
+                <tr><td>3</td><td>424071428</td></tr>
+                <tr class="cm"><td>CM1</td><td>424071429</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="join-on">joined result</p>
+        <div class="grid">
+          <article class="card">
+          <div class="src-badges">
+            <span class="key key-pfi">property</span>
+          </div>
+            <table>
+              <thead>
+                <tr><th>lot</th><th>PARCEL_PFI</th><th>PROPERTY_PFI</th><th>role</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>424071426</td><td>424071431</td><td>unit</td></tr>
+                <tr><td>1</td><td>424071426</td><td>424071430</td><td>parent street</td></tr>
+                <tr><td>2</td><td>424071427</td><td>424071432</td><td>unit</td></tr>
+                <tr><td>2</td><td>424071427</td><td>424071430</td><td>parent street</td></tr>
+                <tr><td>3</td><td>424071428</td><td>424071433</td><td>unit</td></tr>
+                <tr><td>3</td><td>424071428</td><td>424071430</td><td>parent street</td></tr>
+                <tr class="cm"><td>CM1</td><td>424071429</td><td>424071434</td><td>no. 6</td></tr>
+                <tr class="cm"><td>CM1</td><td>424071429</td><td>424071430</td><td>parent street</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="step" data-step="6" data-src="addr">
+        <p class="kicker">Step 5 · Address join</p>
+        <h2>Five address rows for one plan</h2>
+        <p>
+          The address table is separate. It has no lot numbers. Keep primary rows.
+        </p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-prop">address</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>PROPERTY_PFI</th>
+                  <th>NUM_ROAD_ADDRESS</th>
+                  <th>LOCALITY_NAME</th>
+                  <th>POSTCODE</th>
+                  <th>IS_PRIMARY</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>424071431</td><td>1/6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                <tr><td>424071432</td><td>2/6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                <tr><td>424071433</td><td>3/6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                <tr><td>424071434</td><td>6 ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+                <tr class="lose"><td>424071430</td><td>ALFREDA AVENUE</td><td>ROSANNA</td><td>3084</td><td>Y</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p>
+          From step 4 we already have <code>PROPERTY_PFI</code> on each parcel link. Join that to address on the same id.
+        </p>
+        <p class="join-on">join on PROPERTY_PFI</p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>lot</th><th>PROPERTY_PFI</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>424071431</td></tr>
+                <tr><td>1</td><td>424071430</td></tr>
+                <tr><td>2</td><td>424071432</td></tr>
+                <tr><td>2</td><td>424071430</td></tr>
+                <tr><td>3</td><td>424071433</td></tr>
+                <tr><td>3</td><td>424071430</td></tr>
+                <tr class="cm"><td>CM1</td><td>424071434</td></tr>
+                <tr class="cm"><td>CM1</td><td>424071430</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="join-on">joined result</p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+              <span class="key key-prop">address</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>lot</th><th>PROPERTY_PFI</th><th>NUM_ROAD_ADDRESS</th><th>LOCALITY_NAME</th></tr>
+              </thead>
+              <tbody>
+                <tr class="win"><td>1</td><td>424071431</td><td>1/6 ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr class="lose"><td>1</td><td>424071430</td><td>ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr class="win"><td>2</td><td>424071432</td><td>2/6 ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr class="lose"><td>2</td><td>424071430</td><td>ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr class="win"><td>3</td><td>424071433</td><td>3/6 ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr class="lose"><td>3</td><td>424071430</td><td>ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr><td>CM1</td><td>424071434</td><td>6 ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+                <tr class="lose"><td>CM1</td><td>424071430</td><td>ALFREDA AVENUE</td><td>ROSANNA</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="note">Suburb and postcode come from address, not from admin. The next step picks one label for the plan.</p>
+      </section>
+
+      <section class="step" data-step="7" data-src="addr">
+        <p class="kicker">Step 6 · Pick one label</p>
+        <h2>Why we do not take the most common string</h2>
+        <p>
+          The parent property <code>424071430</code> is linked to <em>every</em> parcel, so
+          <code>ALFREDA AVENUE</code> can win a simple mode. That is a street name, not a findable address.
+        </p>
+        <p>
+          We score each string, keep the highest score on the plan, then take the first unit among ties.
+          Units beat house numbers; house numbers beat a bare road.
+        </p>
+        <div class="math">
+          <div class="pill drop">ALFREDA AVENUE × 4 links</div>
+          <div class="pill keep">1/6 ALFREDA AVENUE</div>
+        </div>
+        <p class="result-line">Representative address = <strong>1/6 ALFREDA AVENUE</strong> · n_unit_addresses = <strong>3</strong></p>
+      </section>
+
+      <section class="step" data-step="8" data-src="zone">
+        <p class="kicker">Step 7 · Spatial join</p>
+        <h2>Zone is a point inside a polygon</h2>
+        <p>
+          Parcels in this run are attributes only. Location comes from <code>CENTROID</code>:
+          <code>PARV_CENTROID_PFI</code> = <code>CENTROID.PFI</code>.
+          Then ask whether that point sits <strong>within</strong> a <code>PLAN_ZONE</code> polygon.
+        </p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-pfi">property</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>lot</th><th>PARV_CENTROID_PFI</th><th>CENTROID.PFI</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>424071488</td><td>424071488</td></tr>
+                <tr><td>2</td><td>424071489</td><td>424071489</td></tr>
+                <tr><td>3</td><td>424071490</td><td>424071490</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="join-on">centroid point within PLAN_ZONE polygon</p>
+        <div class="grid">
+          <article class="card">
+            <div class="src-badges">
+              <span class="key key-plan">plan</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>ZONE_CODE</th><th>zone_family</th></tr>
+              </thead>
+              <tbody>
+                <tr class="win"><td>GRZ…</td><td>GRZ</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <p class="result-line">zone_family = <strong>GRZ</strong> → confidence = <strong>high</strong></p>
+        <p class="note">High means residential zone, not “we looked at the buildings.”</p>
+      </section>
+
+      <section class="step" data-step="9" data-src="all">
+        <p class="kicker">One output row</p>
+        <h2>The joins collapse to a single record</h2>
+        <p>
+          After the four joins, counting is finished. This plan is one of 45,057 headline rows:
+          3–10 private lots, PS/SP/RP/CS, common property, residential zone, locatable address.
+        </p>
+        <div class="out-card">
+          <div class="src-badges">
+            <span class="key key-out">derived</span>
+          </div>
+          <dl>
+            <div><dt>plan_number</dt><dd>PS838178</dd></div>
+            <div><dt>address</dt><dd>1/6 ALFREDA AVENUE</dd></div>
+            <div><dt>suburb</dt><dd>ROSANNA</dd></div>
+            <div><dt>lga</dt><dd>BANYULE</dd></div>
+            <div><dt>n_private_lots</dt><dd>3</dd></div>
+            <div><dt>has_common_property</dt><dd>true</dd></div>
+            <div><dt>zone_family</dt><dd>GRZ</dd></div>
+            <div><dt>confidence</dt><dd>high</dd></div>
+            <div><dt>address_quality</dt><dd>unit</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="step" data-step="10" data-src="all">
+        <p class="kicker">Conclusion</p>
+        <h2>What this count answers</h2>
+        <p>
+          The same joins, run on every plan in Victoria, produce a complete extract — not a sample.
+          These are the figures for this Vicmap snapshot.
+        </p>
+        <div class="out-card findings">
+          <dl>
+            <div>
+              <dt>Residential 3–10 lot schemes, Victoria</dt>
+              <dd>45,057</dd>
+            </div>
+            <div>
+              <dt>Street addresses</dt>
+              <dd>Yes — every headline row</dd>
+            </div>
+            <div>
+              <dt>Lots per scheme</dt>
+              <dd>n_private_lots (this example: 3)</dd>
+            </div>
+            <div>
+              <dt>Suburb and LGA</dt>
+              <dd>Yes — e.g. Rosanna, Banyule</dd>
+            </div>
+            <div>
+              <dt>Common property / OC appears to exist</dt>
+              <dd>Yes — CM lot on every headline plan</dd>
+            </div>
+            <div>
+              <dt>Property type (townhouse / villa / complex)</dt>
+              <dd>Not identifiable from Vicmap</dd>
+            </div>
+            <div>
+              <dt>Sources</dt>
+              <dd>property · plan · address · admin</dd>
+            </div>
+            <div>
+              <dt>Confidence</dt>
+              <dd>high = residential zone + locatable address</dd>
+            </div>
+          </dl>
+        </div>
+        <p class="note">
+          45,057 is a count of titled plans that pass the rules. It is not a count of buildings.
+        </p>
+      </section>
+
+      <section class="step end" data-step="11" data-src="all">
+        <p class="kicker">Statewide</p>
+        <h1>Same joins, every plan</h1>
+        <p class="lede">
+          Unzip a new Vicmap dump and rerun the script. The method does not change.
+          The total is how many plans survive this path — currently <strong>45,057</strong>.
+        </p>
+        <ul class="keys-legend">
+          <li><span class="key key-plan">PARCEL_PLAN_NUMBER</span> groups lots into a scheme</li>
+          <li><span class="key key-lga">PARCEL_LGA_CODE</span> = LGA_CODE → council</li>
+          <li><span class="key key-pfi">PARCEL_PFI</span> → PARCEL_PROPERTY</li>
+          <li><span class="key key-prop">PROPERTY_PFI</span> → ADDRESS</li>
+          <li><span class="key key-zone">PLAN_ZONE</span> centroid within zone → residential flag</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
